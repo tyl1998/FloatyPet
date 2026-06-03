@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 占位前景：一只简化的猫脸轮廓。正式上线前替换为品牌 logo。 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group android:scaleX="0.5" android:scaleY="0.5" android:pivotX="54" android:pivotY="54">
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M30,28 L42,46 L66,46 L78,28 L78,64 C78,76 68,84 54,84 C40,84 30,76 30,64 Z" />
+        <path
+            android:fillColor="#3A2E2A"
+            android:pathData="M45,60 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0" />
+        <path
+            android:fillColor="#3A2E2A"
+            android:pathData="M63,60 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0" />
+    </group>
+</vector>

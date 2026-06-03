@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family:-apple-system,"PingFang SC","Segoe UI",sans-serif; }
+  :root{
+    --bg:#FBF6F0;          /* 暖米白背景 */
+    --surface:#FFFFFF;
+    --primary:#FF8A65;     /* 珊瑚橘 主色 */
+    --primary-deep:#F4663B;
+    --ink:#3A2E2A;         /* 暖墨 文字 */
+    --ink2:#8A7A72;        /* 次要文字 */
+    --line:#F0E6DD;
+    --mint:#7FC8A9;        /* 辅助：薄荷绿(成功/陪伴) */
+    --shadow:0 8px 24px rgba(180,130,100,.12);
+  }
+  body{ background:#EFE7DE; padding:40px; display:flex; gap:28px; flex-wrap:wrap; justify-content:center; align-items:flex-start; }
+
+  .phone{ width:300px; height:640px; background:var(--bg); border-radius:38px; box-shadow:0 20px 50px rgba(120,80,60,.25); overflow:hidden; position:relative; border:9px solid #2B2320; }
+  .notch{ position:absolute; top:0; left:50%; transform:translateX(-50%); width:120px; height:24px; background:#2B2320; border-radius:0 0 16px 16px; z-index:50; }
+  .statusbar{ height:44px; display:flex; align-items:center; justify-content:space-between; padding:0 22px; font-size:12px; font-weight:600; color:var(--ink); padding-top:8px; }
+  .label{ text-align:center; margin-top:14px; font-size:13px; color:#5A4A42; font-weight:600; letter-spacing:.3px; }
+  .screen-wrap{ display:flex; flex-direction:column; align-items:center; }
+
+  .title{ font-size:20px; font-weight:800; color:var(--ink); }
+  .sub{ font-size:12px; color:var(--ink2); }
+  .pad{ padding:6px 18px 18px; }
+  .pill{ background:var(--primary); color:#fff; border:none; border-radius:30px; padding:14px 0; width:100%; font-size:15px; font-weight:700; box-shadow:0 6px 16px rgba(244,102,59,.35); }
+  .pill.ghost{ background:#fff; color:var(--primary-deep); border:1.5px solid #FFD9CC; box-shadow:none; }
+  .card{ background:var(--surface); border-radius:22px; box-shadow:var(--shadow); }
+
+  /* ===== screen 1: 桌面悬浮窗 ===== */
+  .home-wall{ height:100%; background:linear-gradient(160deg,#FFE7C7,#FFC9A8 55%,#FFB0C4); position:relative; }
+  .home-clock{ text-align:center; color:#fff; padding-top:70px; text-shadow:0 2px 10px rgba(0,0,0,.15); }
+  .home-clock .t{ font-size:56px; font-weight:200; letter-spacing:2px; }
+  .home-clock .d{ font-size:14px; margin-top:-4px; }
+  .app-grid{ position:absolute; bottom:90px; width:100%; display:grid; grid-template-columns:repeat(4,1fr); gap:18px; padding:0 26px; }
+  .app-ico{ aspect-ratio:1; background:rgba(255,255,255,.55); border-radius:16px; backdrop-filter:blur(4px); }
+  .dock{ position:absolute; bottom:18px; left:18px; right:18px; height:58px; background:rgba(255,255,255,.45); border-radius:22px; backdrop-filter:blur(8px); }
+  .pet{ position:absolute; right:18px; bottom:150px; width:96px; text-align:center; }
+  .pet .body{ font-size:74px; filter:drop-shadow(0 6px 10px rgba(0,0,0,.18)); }
+  .bubble{ position:absolute; right:96px; bottom:235px; background:#fff; border-radius:16px 16px 4px 16px; padding:8px 12px; font-size:12px; color:var(--ink); box-shadow:var(--shadow); white-space:nowrap; }
+  .bubble .tag{ font-size:9px; color:var(--mint); font-weight:700; }
+  .ghost-note{ position:absolute; top:54px; left:14px; right:14px; background:rgba(255,255,255,.85); border-radius:14px; padding:8px 12px; font-size:11px; color:var(--ink2); display:flex; gap:6px; align-items:center; }
+
+  /* ===== generic content screens ===== */
+  .nav{ display:flex; align-items:center; gap:10px; padding:6px 18px 10px; }
+  .nav .back{ font-size:20px; color:var(--ink); }
+
+  /* screen 2 home/my pets */
+  .hero-pet{ margin:8px 18px; border-radius:26px; height:230px; background:linear-gradient(150deg,#FFD9B8,#FFB59A); position:relative; box-shadow:var(--shadow); overflow:hidden; }
+  .hero-pet .big{ position:absolute; bottom:8px; left:50%; transform:translateX(-50%); font-size:120px; filter:drop-shadow(0 8px 12px rgba(0,0,0,.15)); }
+  .hero-pet .name{ position:absolute; top:16px; left:18px; color:#fff; font-weight:800; font-size:18px; text-shadow:0 1px 6px rgba(0,0,0,.2); }
+  .hero-pet .status{ position:absolute; top:42px; left:18px; color:#fff; font-size:11px; opacity:.92; }
+  .row{ display:flex; gap:10px; padding:10px 18px; }
+  .mini{ flex:1; background:#fff; border-radius:18px; padding:12px; text-align:center; box-shadow:var(--shadow); }
+  .mini .ico{ font-size:22px; } .mini .tx{ font-size:11px; color:var(--ink2); margin-top:4px; font-weight:600; }
+  .petlist{ display:flex; gap:12px; padding:6px 18px; overflow:hidden; }
+  .petthumb{ width:64px; height:64px; border-radius:18px; background:#FFF; box-shadow:var(--shadow); display:flex; align-items:center; justify-content:center; font-size:32px; flex:0 0 auto; }
+  .petthumb.add{ border:2px dashed #FFC1A8; background:#FFF6F1; color:var(--primary); font-size:26px; }
+
+  /* screen 3 import/edit */
+  .editor{ margin:10px 18px; height:300px; border-radius:24px; background:repeating-conic-gradient(#F2EAE3 0% 25%,#fff 0% 50%) 50%/24px 24px; position:relative; box-shadow:var(--shadow); overflow:hidden; }
+  .editor .subj{ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:120px; }
+  .editor .crop{ position:absolute; inset:34px; border:2px solid var(--primary); border-radius:14px; }
+  .toolbar{ display:flex; justify-content:space-around; padding:14px 18px; }
+  .tool{ text-align:center; font-size:11px; color:var(--ink2); font-weight:600; }
+  .tool .ico{ display:block; font-size:22px; margin-bottom:4px; }
+
+  /* screen 4 AI generation progress */
+  .gen-pet{ margin:18px auto 6px; width:150px; height:150px; border-radius:50%; background:linear-gradient(150deg,#FFE3CC,#FFC2A6); display:flex; align-items:center; justify-content:center; font-size:84px; box-shadow:var(--shadow); position:relative; }
+  .ring{ position:absolute; inset:-6px; border-radius:50%; border:4px solid var(--primary); border-top-color:transparent; }
+  .gen-actions{ padding:8px 18px; }
+  .actrow{ display:flex; align-items:center; gap:12px; background:#fff; border-radius:16px; padding:12px 14px; margin-bottom:10px; box-shadow:var(--shadow); }
+  .dot{ width:22px; height:22px; border-radius:50%; flex:0 0 auto; display:flex; align-items:center; justify-content:center; font-size:12px; color:#fff; }
+  .dot.done{ background:var(--mint); } .dot.run{ background:var(--primary); } .dot.wait{ background:#E6DAD0; color:var(--ink2); }
+  .actrow .nm{ font-size:13px; font-weight:700; color:var(--ink); } .actrow .st{ font-size:11px; color:var(--ink2); }
+
+  /* screen 5 DND */
+  .toggle-card{ margin:10px 18px; }
+  .titem{ display:flex; align-items:center; justify-content:space-between; padding:15px 16px; border-bottom:1px solid var(--line); }
+  .titem:last-child{ border-bottom:none; }
+  .titem .l .nm{ font-size:14px; font-weight:700; color:var(--ink); }
+  .titem .l .ds{ font-size:11px; color:var(--ink2); margin-top:2px; }
+  .sw{ width:46px; height:27px; border-radius:30px; background:var(--primary); position:relative; flex:0 0 auto; }
+  .sw.off{ background:#E2D6CC; }
+  .sw::after{ content:""; position:absolute; top:3px; width:21px; height:21px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.2); right:3px; }
+  .sw.off::after{ right:auto; left:3px; }
+  .sec-h{ font-size:12px; font-weight:800; color:var(--ink2); padding:14px 20px 6px; letter-spacing:.5px; }
+  .applist{ display:flex; gap:8px; padding:4px 18px 10px; flex-wrap:wrap; }
+  .chip{ background:#FFF1EA; color:var(--primary-deep); border-radius:20px; padding:7px 13px; font-size:12px; font-weight:600; }
+</style>
+</head>
+<body>
+
+<!-- 1. 桌面悬浮窗 -->
+<div class="screen-wrap">
+<div class="phone"><div class="notch"></div>
+  <div class="home-wall">
+    <div class="ghost-note">🪟 <span>悬浮宠物已开启 · 点击宠物互动</span></div>
+    <div class="home-clock"><div class="t">9:41</div><div class="d">6月2日 星期一 · 晴 26°</div></div>
+    <div class="bubble"><div class="tag">☀️ 天气 · 预留</div>今天天气真好，晒太阳~</div>
+    <div class="pet"><div class="body">🐱</div></div>
+    <div class="app-grid">
+      <div class="app-ico"></div><div class="app-ico"></div><div class="app-ico"></div><div class="app-ico"></div>
+      <div class="app-ico"></div><div class="app-ico"></div><div class="app-ico"></div><div class="app-ico"></div>
+    </div>
+    <div class="dock"></div>
+  </div>
+</div>
+<div class="label">① 桌面悬浮窗（核心场景）</div>
+</div>
+
+<!-- 2. App 首页 -->
+<div class="screen-wrap">
+<div class="phone"><div class="notch"></div>
+  <div class="statusbar"><span>9:41</span><span>📶 🔋</span></div>
+  <div class="pad" style="display:flex;justify-content:space-between;align-items:center;">
+    <div><div class="title">我的桌宠</div><div class="sub">陪你的第 18 天</div></div>
+    <div style="font-size:22px;">⚙️</div>
+  </div>
+  <div class="hero-pet">
+    <div class="name">小橘</div>
+    <div class="status">😌 悠闲 · 正在晒太阳</div>
+    <div class="big">🐱</div>
+  </div>
+  <div class="row">
+    <div class="mini"><div class="ico">🎨</div><div class="tx">换形象</div></div>
+    <div class="mini"><div class="ico">✨</div><div class="tx">动作库</div></div>
+    <div class="mini"><div class="ico">🌙</div><div class="tx">免打扰</div></div>
+  </div>
+  <div class="sec-h">我的宠物</div>
+  <div class="petlist">
+    <div class="petthumb">🐱</div><div class="petthumb">🐶</div><div class="petthumb">🐰</div>
+    <div class="petthumb add">＋</div>
+  </div>
+</div>
+<div class="label">② App 首页</div>
+</div>
+
+<!-- 3. 素材导入/编辑 -->
+<div class="screen-wrap">
+<div class="phone"><div class="notch"></div>
+  <div class="statusbar"><span>9:41</span><span>📶 🔋</span></div>
+  <div class="nav"><span class="back">←</span><span class="title" style="font-size:17px;">编辑形象</span></div>
+  <div class="editor">
+    <div class="crop"></div>
+    <div class="subj">🐶</div>
+  </div>
+  <div class="toolbar">
+    <div class="tool"><span class="ico">✂️</span>裁剪</div>
+    <div class="tool"><span class="ico">🪄</span>抠图</div>
+    <div class="tool"><span class="ico">🔍</span>大小</div>
+    <div class="tool"><span class="ico">📍</span>锚点</div>
+  </div>
+  <div class="pad">
+    <button class="pill ghost" style="margin-bottom:10px;">✨ AI 生成专属形象</button>
+    <button class="pill">完成，放到桌面</button>
+  </div>
+</div>
+<div class="label">③ 素材导入 / 编辑</div>
+</div>
+
+<!-- 4. AI 渐进式生成 -->
+<div class="screen-wrap">
+<div class="phone"><div class="notch"></div>
+  <div class="statusbar"><span>9:41</span><span>📶 🔋</span></div>
+  <div class="nav"><span class="back">←</span><span class="title" style="font-size:17px;">AI 生成中</span></div>
+  <div class="gen-pet"><div class="ring"></div>🐶</div>
+  <div style="text-align:center;" class="sub">核心动作已就绪，可先放到桌面<br>其余动作后台生成中…</div>
+  <div class="gen-actions" style="margin-top:10px;">
+    <div class="actrow"><div class="dot done">✓</div><div><div class="nm">待机 idle</div><div class="st">已生成 3 帧</div></div></div>
+    <div class="actrow"><div class="dot done">✓</div><div><div class="nm">迎接 greet</div><div class="st">已生成 2 帧</div></div></div>
+    <div class="actrow"><div class="dot run">●</div><div><div class="nm">睡觉 sleep</div><div class="st">生成中…</div></div></div>
+    <div class="actrow"><div class="dot wait">4</div><div><div class="nm">伸懒腰 / 开心 …</div><div class="st">排队中（后台）</div></div></div>
+  </div>
+  <div class="pad"><button class="pill">先放到桌面</button></div>
+</div>
+<div class="label">④ AI 渐进式生成</div>
+</div>
+
+<!-- 5. 免打扰设置 -->
+<div class="screen-wrap">
+<div class="phone"><div class="notch"></div>
+  <div class="statusbar"><span>9:41</span><span>📶 🔋</span></div>
+  <div class="nav"><span class="back">←</span><span class="title" style="font-size:17px;">免打扰</span></div>
+  <div class="sec-h">基础（无需权限）</div>
+  <div class="card toggle-card">
+    <div class="titem"><div class="l"><div class="nm">免打扰时段</div><div class="ds">23:00–07:00 睡眠</div></div><div class="sw"></div></div>
+    <div class="titem"><div class="l"><div class="nm">天气感知动作</div><div class="ds">雨天蜷缩 · 高温吐舌</div></div><div class="sw"></div></div>
+  </div>
+  <div class="sec-h">增强（需授权）</div>
+  <div class="card toggle-card">
+    <div class="titem"><div class="l"><div class="nm">通话时自动隐藏</div><div class="ds">需通话状态权限</div></div><div class="sw off"></div></div>
+    <div class="titem"><div class="l"><div class="nm">APP 场景感知</div><div class="ds">游戏躲角落 · 视频陪看</div></div><div class="sw"></div></div>
+  </div>
+  <div class="sec-h">打开这些 APP 时隐藏</div>
+  <div class="applist">
+    <div class="chip">王者荣耀 ✕</div><div class="chip">腾讯会议 ✕</div><div class="chip">＋ 添加</div>
+  </div>
+</div>
+<div class="label">⑤ 免打扰设置</div>
+</div>
+
+</body>
+</html>

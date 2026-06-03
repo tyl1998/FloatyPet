@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 与 Compose 主题暖色 token 对齐（仅供启动窗口/系统栏使用） -->
+    <color name="warm_bg">#FBF6F0</color>
+    <color name="primary">#FF8A65</color>
+</resources>

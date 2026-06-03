@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Base theme: 实际界面样式由 Compose MaterialTheme 控制（见 ui/theme）。
+         这里只提供 Activity 启动前的窗口背景，与暖米白主调一致。 -->
+    <style name="Theme.FloatyPet" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/warm_bg</item>
+        <item name="android:statusBarColor">@color/warm_bg</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+</resources>

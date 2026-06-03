@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family:-apple-system,"PingFang SC","Segoe UI",sans-serif; }
+  :root{
+    --bg:#FBF6F0; --surface:#FFFFFF; --primary:#FF8A65; --primary-deep:#F4663B;
+    --ink:#3A2E2A; --ink2:#8A7A72; --line:#F0E6DD; --mint:#7FC8A9;
+    --shadow:0 8px 24px rgba(180,130,100,.12);
+  }
+  body{ background:#EFE7DE; padding:40px; display:flex; gap:28px; flex-wrap:wrap; justify-content:center; align-items:flex-start; }
+  .phone{ width:300px; height:640px; background:var(--bg); border-radius:38px; box-shadow:0 20px 50px rgba(120,80,60,.25); overflow:hidden; position:relative; border:9px solid #2B2320; }
+  .notch{ position:absolute; top:0; left:50%; transform:translateX(-50%); width:120px; height:24px; background:#2B2320; border-radius:0 0 16px 16px; z-index:50; }
+  .statusbar{ height:44px; display:flex; align-items:center; justify-content:space-between; padding:8px 22px 0; font-size:12px; font-weight:600; color:var(--ink); }
+  .label{ text-align:center; margin-top:14px; font-size:13px; color:#5A4A42; font-weight:600; }
+  .screen-wrap{ display:flex; flex-direction:column; align-items:center; }
+  .title{ font-size:20px; font-weight:800; color:var(--ink); }
+  .sub{ font-size:12px; color:var(--ink2); }
+  .pad{ padding:6px 18px 18px; }
+  .nav{ display:flex; align-items:center; gap:10px; padding:6px 18px 10px; }
+  .nav .back{ font-size:20px; color:var(--ink); }
+  .pill{ background:var(--primary); color:#fff; border:none; border-radius:30px; padding:14px 0; width:100%; font-size:15px; font-weight:700; box-shadow:0 6px 16px rgba(244,102,59,.35); }
+  .pill.ghost{ background:#fff; color:var(--primary-deep); border:1.5px solid #FFD9CC; box-shadow:none; }
+  .card{ background:var(--surface); border-radius:22px; box-shadow:var(--shadow); margin:8px 18px; }
+  .sec-h{ font-size:12px; font-weight:800; color:var(--ink2); padding:14px 20px 6px; letter-spacing:.5px; }
+  .titem{ display:flex; align-items:center; justify-content:space-between; padding:15px 16px; border-bottom:1px solid var(--line); }
+  .titem:last-child{ border-bottom:none; }
+  .titem .l .nm{ font-size:14px; font-weight:700; color:var(--ink); }
+  .titem .l .ds{ font-size:11px; color:var(--ink2); margin-top:2px; }
+  .titem .r{ font-size:13px; color:var(--ink2); }
+  .sw{ width:46px; height:27px; border-radius:30px; background:var(--primary); position:relative; flex:0 0 auto; }
+  .sw.off{ background:#E2D6CC; }
+  .sw::after{ content:""; position:absolute; top:3px; width:21px; height:21px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.2); right:3px; }
+  .sw.off::after{ right:auto; left:3px; }
+
+  /* AI config */
+  .input{ background:#F7EFE8; border-radius:14px; padding:13px 14px; font-size:13px; color:var(--ink); margin:6px 18px; display:flex; align-items:center; justify-content:space-between; }
+  .input .ph{ color:var(--ink2); }
+  .provider{ display:flex; gap:10px; padding:6px 18px; flex-wrap:wrap; }
+  .pchip{ border:1.5px solid var(--line); border-radius:16px; padding:9px 14px; font-size:12px; font-weight:600; color:var(--ink2); }
+  .pchip.on{ border-color:var(--primary); background:#FFF1EA; color:var(--primary-deep); }
+  .ok{ display:flex; align-items:center; gap:8px; margin:8px 18px; font-size:12px; color:var(--mint); font-weight:700; }
+
+  /* onboarding */
+  .ob{ height:100%; background:linear-gradient(165deg,#FFE7C7,#FFC9A8 60%,#FFB0C4); display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:0 30px; }
+  .ob .pet{ font-size:120px; filter:drop-shadow(0 8px 14px rgba(0,0,0,.18)); }
+  .ob h1{ color:#fff; font-size:26px; font-weight:800; margin-top:12px; text-shadow:0 2px 10px rgba(0,0,0,.15); }
+  .ob p{ color:#fff; font-size:14px; opacity:.95; margin-top:10px; line-height:1.6; }
+  .ob .dots{ display:flex; gap:7px; margin:22px 0; }
+  .ob .dots i{ width:7px; height:7px; border-radius:50%; background:rgba(255,255,255,.5); }
+  .ob .dots i.on{ width:20px; border-radius:6px; background:#fff; }
+  .ob .pill{ background:#fff; color:var(--primary-deep); }
+
+  /* action library */
+  .grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; padding:8px 18px; }
+  .acell{ background:#fff; border-radius:18px; box-shadow:var(--shadow); padding:12px 6px; text-align:center; position:relative; }
+  .acell .em{ font-size:38px; } .acell .nm{ font-size:11px; font-weight:700; color:var(--ink); margin-top:4px; }
+  .acell .fr{ font-size:9px; color:var(--ink2); }
+  .acell .badge{ position:absolute; top:8px; right:8px; font-size:9px; padding:2px 6px; border-radius:8px; font-weight:700; }
+  .badge.done{ background:#E7F5EE; color:var(--mint); }
+  .badge.gen{ background:#FFF1EA; color:var(--primary-deep); }
+
+  /* touch feedback (overlay close-up) */
+  .stage{ height:100%; background:linear-gradient(160deg,#FFE7C7,#FFB0C4); position:relative; display:flex; align-items:center; justify-content:center; }
+  .stage .pet{ font-size:130px; filter:drop-shadow(0 8px 12px rgba(0,0,0,.18)); }
+  .stage .bubble{ position:absolute; top:150px; right:40px; background:#fff; border-radius:16px 16px 16px 4px; padding:10px 14px; font-size:13px; color:var(--ink); box-shadow:var(--shadow); }
+  .stage .bubble .tag{ font-size:9px; color:var(--mint); font-weight:800; display:block; margin-bottom:2px; }
+  .ripple{ position:absolute; width:90px; height:90px; border-radius:50%; border:3px solid rgba(255,255,255,.7); bottom:200px; left:50%; transform:translateX(-50%); }
+  .hand{ position:absolute; bottom:175px; left:54%; font-size:40px; }
+  .hint{ position:absolute; bottom:30px; left:20px; right:20px; text-align:center; color:#fff; font-size:12px; background:rgba(0,0,0,.18); border-radius:14px; padding:8px; backdrop-filter:blur(4px); }
+</style>
+</head>
+<body>
+
+<!-- 6. AI 服务配置 -->
+<div class="screen-wrap">
+<div class="phone"><div class="notch"></div>
+  <div class="statusbar"><span>9:41</span><span>📶 🔋</span></div>
+  <div class="nav"><span class="back">←</span><span class="title" style="font-size:17px;">AI 服务配置</span></div>
+  <div class="sub" style="padding:0 18px 4px;">用你自己的 AI 服务生成专属宠物，密钥仅存本机加密保管</div>
+  <div class="sec-h">选择服务商</div>
+  <div class="provider">
+    <div class="pchip on">OpenAI 兼容</div><div class="pchip">通义千问</div><div class="pchip">火山引擎</div>
+  </div>
+  <div class="sec-h">API Key</div>
+  <div class="input"><span class="ph">sk-••••••••••••••••3a9f</span><span>👁</span></div>
+  <div class="sec-h">接口地址（可选）</div>
+  <div class="input"><span class="ph">https://api.openai.com/v1</span></div>
+  <div class="ok">🔒 已加密保存 · 连通性测试通过</div>
+  <div class="pad" style="position:absolute;bottom:0;left:0;right:0;"><button class="pill">测试并保存</button></div>
+</div>
+<div class="label">⑥ AI 服务配置</div>
+</div>
+
+<!-- 7. 通用设置 -->
+<div class="screen-wrap">
+<div class="phone"><div class="notch"></div>
+  <div class="statusbar"><span>9:41</span><span>📶 🔋</span></div>
+  <div class="nav"><span class="back">←</span><span class="title" style="font-size:17px;">设置</span></div>
+  <div class="sec-h">桌面宠物</div>
+  <div class="card">
+    <div class="titem"><div class="l"><div class="nm">显示宠物</div><div class="ds">悬浮窗已开启</div></div><div class="sw"></div></div>
+    <div class="titem"><div class="l"><div class="nm">互动音效</div><div class="ds">默认关闭</div></div><div class="sw off"></div></div>
+    <div class="titem"><div class="l"><div class="nm">自主动作频率</div><div class="ds">每小时最多 3 次</div></div><div class="r">适中 ›</div></div>
+  </div>
+  <div class="sec-h">服务与数据</div>
+  <div class="card">
+    <div class="titem"><div class="l"><div class="nm">AI 服务配置</div></div><div class="r">已连接 ›</div></div>
+    <div class="titem"><div class="l"><div class="nm">权限管理</div></div><div class="r">2/4 ›</div></div>
+  </div>
+  <div class="sec-h">关于</div>
+  <div class="card">
+    <div class="titem"><div class="l"><div class="nm">使用帮助</div></div><div class="r">›</div></div>
+    <div class="titem"><div class="l"><div class="nm">隐私说明</div><div class="ds">无广告 · 无埋点 · 数据本地</div></div><div class="r">›</div></div>
+    <div class="titem"><div class="l"><div class="nm">版本</div></div><div class="r">v1.0.0</div></div>
+  </div>
+</div>
+<div class="label">⑦ 通用设置</div>
+</div>
+
+<!-- 8. 首次引导 -->
+<div class="screen-wrap">
+<div class="phone"><div class="notch"></div>
+  <div class="ob">
+    <div class="pet">🐱</div>
+    <h1>领养你的第一只桌宠</h1>
+    <p>导入一张照片，或用你的 AI 服务<br>生成一只独一无二的桌面伙伴</p>
+    <div class="dots"><i class="on"></i><i></i><i></i></div>
+    <button class="pill" style="width:80%;">开始领养</button>
+    <p style="font-size:11px;opacity:.8;margin-top:14px;">仅需悬浮窗 + 存储两项权限</p>
+  </div>
+</div>
+<div class="label">⑧ 首次引导</div>
+</div>
+
+<!-- 9. 动作库 -->
+<div class="screen-wrap">
+<div class="phone"><div class="notch"></div>
+  <div class="statusbar"><span>9:41</span><span>📶 🔋</span></div>
+  <div class="nav"><span class="back">←</span><span class="title" style="font-size:17px;">小橘的动作库</span></div>
+  <div class="sub" style="padding:0 18px 6px;">7 / 9 个动作已解锁 · 2 个生成中</div>
+  <div class="grid">
+    <div class="acell"><span class="badge done">✓</span><div class="em">😺</div><div class="nm">待机</div><div class="fr">3 帧</div></div>
+    <div class="acell"><span class="badge done">✓</span><div class="em">🙆</div><div class="nm">迎接</div><div class="fr">2 帧</div></div>
+    <div class="acell"><span class="badge done">✓</span><div class="em">😴</div><div class="nm">睡觉</div><div class="fr">2 帧</div></div>
+    <div class="acell"><span class="badge done">✓</span><div class="em">🐱</div><div class="nm">趴下</div><div class="fr">1 帧</div></div>
+    <div class="acell"><span class="badge done">✓</span><div class="em">🥰</div><div class="nm">开心</div><div class="fr">2 帧</div></div>
+    <div class="acell"><span class="badge done">✓</span><div class="em">🙀</div><div class="nm">伸懒腰</div><div class="fr">3 帧</div></div>
+    <div class="acell"><span class="badge gen">●</span><div class="em" style="opacity:.4">😿</div><div class="nm">委屈</div><div class="fr">生成中</div></div>
+    <div class="acell"><span class="badge gen">●</span><div class="em" style="opacity:.4">🚶</div><div class="nm">走路</div><div class="fr">排队中</div></div>
+    <div class="acell"><div class="em" style="opacity:.3">➕</div><div class="nm" style="color:var(--ink2)">自定义</div></div>
+  </div>
+</div>
+<div class="label">⑨ 动作库（逐帧管理）</div>
+</div>
+
+<!-- 10. 触摸互动反馈（悬浮窗特写） -->
+<div class="screen-wrap">
+<div class="phone"><div class="notch"></div>
+  <div class="stage">
+    <div class="bubble"><span class="tag">蹭手 · 双击反馈</span>喵~ 喜欢你摸我 ♥</div>
+    <div class="pet">😻</div>
+    <div class="ripple"></div>
+    <div class="hand">👆</div>
+    <div class="hint">单击抬头 · 双击蹭手 · 摸头眯眼 · 长按拖拽</div>
+  </div>
+</div>
+<div class="label">⑩ 触摸互动反馈（特写）</div>
+</div>
+
+</body>
+</html>

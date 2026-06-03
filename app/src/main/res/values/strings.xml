@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">浮宠</string>
+    <string name="overlay_notification_channel">桌面宠运行状态</string>
+    <string name="overlay_notification_title">桌面宠正在运行</string>
+    <string name="overlay_notification_text">点击进入 App</string>
+</resources>
