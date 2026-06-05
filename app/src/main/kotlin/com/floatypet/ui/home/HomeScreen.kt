@@ -1,24 +1,34 @@
 package com.floatypet.ui.home
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -26,16 +36,18 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @Composable
 fun HomeRoute(
-    onToggleOverlay: () -> Unit,
     onAdoptPet: () -> Unit,
+    onToggleOverlay: () -> Unit,
+    onGoAiConfig: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     HomeScreen(
         uiState = uiState,
-        onToggleOverlay = onToggleOverlay,
         onAdoptPet = onAdoptPet,
+        onToggleOverlay = onToggleOverlay,
+        onGoAiConfig = onGoAiConfig,
         modifier = modifier,
     )
 }
@@ -43,15 +55,16 @@ fun HomeRoute(
 @Composable
 internal fun HomeScreen(
     uiState: HomeUiState,
-    onToggleOverlay: () -> Unit,
     onAdoptPet: () -> Unit,
+    onToggleOverlay: () -> Unit,
+    onGoAiConfig: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         when (uiState) {
             HomeUiState.Loading -> CircularProgressIndicator()
             HomeUiState.Empty -> EmptyContent(onAdoptPet)
-            is HomeUiState.Ready -> ReadyContent(uiState, onToggleOverlay)
+            is HomeUiState.Ready -> ReadyContent(uiState, onToggleOverlay, onAdoptPet, onGoAiConfig)
         }
     }
 }
@@ -84,12 +97,25 @@ private fun EmptyContent(onAdoptPet: () -> Unit) {
 }
 
 @Composable
-private fun ReadyContent(state: HomeUiState.Ready, onToggleOverlay: () -> Unit) {
+private fun ReadyContent(
+    state: HomeUiState.Ready,
+    onToggleOverlay: () -> Unit,
+    onAdoptPet: () -> Unit,
+    onGoAiConfig: () -> Unit,
+) {
     Column(
         modifier = Modifier.fillMaxWidth().padding(18.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        Text("我的桌宠", style = MaterialTheme.typography.titleLarge)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text("我的桌宠", style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
+            IconButton(onClick = onGoAiConfig) {
+                Icon(Icons.Default.Settings, contentDescription = "AI 配置")
+            }
+        }
         Card(
             modifier = Modifier.fillMaxWidth().height(220.dp),
             shape = MaterialTheme.shapes.extraLarge,
@@ -100,7 +126,17 @@ private fun ReadyContent(state: HomeUiState.Ready, onToggleOverlay: () -> Unit) 
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
             ) {
-                Text("🐱", style = MaterialTheme.typography.headlineLarge)
+                val thumb = state.thumbnail
+                if (thumb != null) {
+                    Image(
+                        bitmap = thumb.asImageBitmap(),
+                        contentDescription = state.petName,
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier.size(120.dp),
+                    )
+                } else {
+                    Text("🐱", style = MaterialTheme.typography.headlineLarge)
+                }
                 Text(
                     state.petName,
                     style = MaterialTheme.typography.titleMedium,
@@ -124,6 +160,9 @@ private fun ReadyContent(state: HomeUiState.Ready, onToggleOverlay: () -> Unit) 
             modifier = Modifier.fillMaxWidth(),
         ) {
             Text(if (state.overlayRunning) "宠物已在桌面 · 点击收起" else "把宠物放到桌面")
+        }
+        TextButton(onClick = onAdoptPet, modifier = Modifier.fillMaxWidth()) {
+            Text("换一只")
         }
     }
 }

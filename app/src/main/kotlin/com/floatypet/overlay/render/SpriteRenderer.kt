@@ -1,13 +1,17 @@
 package com.floatypet.overlay.render
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.Rect
 import android.graphics.RectF
 import android.view.Surface
 import com.floatypet.core.model.PetAction
 import com.floatypet.core.model.PetAssetType
 import com.floatypet.core.model.PetBodyPart
+import java.io.File
 import kotlin.math.sin
 
 /**
@@ -35,10 +39,13 @@ class SpriteRenderer : PetRenderer {
     // 动画时间基准
     private var startNanos = 0L
     private var elapsedSec = 0f
+    private var lastFrameNanos = 0L
 
     // 临时动作（非 idle）的剩余展示时间
     private var transientUntilSec = 0f
+    private var mirrorX = false
 
+    private val framePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { isFilterBitmap = true }
     private val facePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.parseColor("#FFB74D") }
     private val darkPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.parseColor("#3A2E2A") }
     private val blushPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.parseColor("#FF8A65"); alpha = 120 }
@@ -55,7 +62,19 @@ class SpriteRenderer : PetRenderer {
 
     override fun loadPet(assetPath: String, type: PetAssetType) {
         require(type == PetAssetType.SPRITE_2D) { "SpriteRenderer 仅支持 2D 精灵图" }
-        // TODO: 扫描 assetPath 下各动作目录，注册到 FrameSequencer（懒加载）
+        sequencer.disposeAll()
+        if (assetPath.isBlank()) return // 无素材 → drawTo 走占位猫
+        // 扫描 {assetPath}/{action}/frame_*.png，注册到 FrameSequencer
+        val petDir = File(assetPath)
+        for (action in PetAction.entries) {
+            val dir = File(petDir, action.assetDir)
+            val frames = dir.listFiles { f -> f.extension.equals("png", true) }
+                ?.sortedBy { it.name }
+                ?.mapNotNull { BitmapFactory.decodeFile(it.absolutePath) }
+                ?: emptyList()
+            if (frames.isNotEmpty()) sequencer.setFrames(action, frames)
+        }
+        sequencer.play(PetAction.IDLE)
     }
 
     override fun playAction(action: PetAction) {
@@ -66,6 +85,7 @@ class SpriteRenderer : PetRenderer {
     }
 
     override fun render(frameTimeNanos: Long) {
+        lastFrameNanos = frameTimeNanos
         if (startNanos == 0L) startNanos = frameTimeNanos
         elapsedSec = (frameTimeNanos - startNanos) / 1_000_000_000f
 
@@ -91,6 +111,33 @@ class SpriteRenderer : PetRenderer {
 
     override fun drawTo(canvas: Canvas) {
         if (viewW == 0 || viewH == 0) return
+        // 有真实帧 → 画帧；否则回退占位猫
+        val frame = sequencer.currentFrame(lastFrameNanos)
+        if (frame != null && !frame.isRecycled) {
+            drawFrame(canvas, frame)
+        } else {
+            drawPlaceholderCat(canvas)
+        }
+    }
+
+    private fun drawFrame(canvas: Canvas, frame: Bitmap) {
+        val cx = viewW / 2f + dx
+        val cy = viewH / 2f + dy
+        val fit = minOf(viewW.toFloat() / frame.width, viewH.toFloat() / frame.height)
+        val w = frame.width * fit * scale
+        val h = frame.height * fit * scale
+        val dst = RectF(cx - w / 2f, cy - h / 2f, cx + w / 2f, cy + h / 2f)
+        canvas.save()
+        canvas.rotate(rotation, cx, cy)
+        if (mirrorX) {
+            // 水平翻转：沿中心 X 轴镜像
+            canvas.scale(-1f, 1f, cx, cy)
+        }
+        canvas.drawBitmap(frame, Rect(0, 0, frame.width, frame.height), dst, framePaint)
+        canvas.restore()
+    }
+
+    private fun drawPlaceholderCat(canvas: Canvas) {
         val cx = viewW / 2f + dx
         val cy = viewH / 2f + dy
         val r = minOf(viewW, viewH) * 0.36f * scale
@@ -139,13 +186,12 @@ class SpriteRenderer : PetRenderer {
     }
 
     override fun applyTransform(scale: Float, dx: Float, dy: Float, rotation: Float) {
-        this.scale = scale
-        this.dx = dx
-        this.dy = dy
-        this.rotation = rotation
+        this.scale = scale; this.dx = dx; this.dy = dy; this.rotation = rotation
     }
 
+    override fun setMirrorX(mirror: Boolean) { mirrorX = mirror }
+
     override fun dispose() {
-        sequencer.trimMemory()
+        sequencer.disposeAll()
     }
 }
