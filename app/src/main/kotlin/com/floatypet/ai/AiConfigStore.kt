@@ -26,9 +26,12 @@ class AiConfigStore @Inject constructor(
         val apiKey: String = "",
         val baseUrl: String = DEFAULT_BASE_URL,
         val genModel: String = DEFAULT_MODEL,
+        val visionModel: String = "",   // 可选：用于照片分析的视觉模型
     ) {
         val isConfigured: Boolean
             get() = apiKey.isNotBlank() && baseUrl.isNotBlank() && genModel.isNotBlank()
+        val hasVisionModel: Boolean
+            get() = isConfigured && visionModel.isNotBlank()
     }
 
     val config: Flow<AiConfig> = context.aiDataStore.data.map { prefs ->
@@ -38,15 +41,17 @@ class AiConfigStore @Inject constructor(
             apiKey = apiKey,
             baseUrl = prefs[KEY_BASE_URL] ?: DEFAULT_BASE_URL,
             genModel = prefs[KEY_GEN_MODEL] ?: DEFAULT_MODEL,
+            visionModel = prefs[KEY_VISION_MODEL] ?: "",
         )
     }
 
-    suspend fun save(apiKey: String, baseUrl: String, genModel: String) {
+    suspend fun save(apiKey: String, baseUrl: String, genModel: String, visionModel: String = "") {
         val enc = if (apiKey.isNotBlank()) keystore.encrypt(apiKey) else ""
         context.aiDataStore.edit { p ->
             p[KEY_ENC_API_KEY] = enc
             p[KEY_BASE_URL] = baseUrl.trimEnd('/')
             p[KEY_GEN_MODEL] = genModel
+            p[KEY_VISION_MODEL] = visionModel
         }
     }
 
@@ -56,5 +61,6 @@ class AiConfigStore @Inject constructor(
         private val KEY_ENC_API_KEY = stringPreferencesKey("enc_api_key")
         private val KEY_BASE_URL = stringPreferencesKey("base_url")
         private val KEY_GEN_MODEL = stringPreferencesKey("gen_model")
+        private val KEY_VISION_MODEL = stringPreferencesKey("vision_model")
     }
 }

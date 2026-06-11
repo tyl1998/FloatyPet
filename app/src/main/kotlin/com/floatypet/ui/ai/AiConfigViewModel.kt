@@ -28,6 +28,7 @@ class AiConfigViewModel @Inject constructor(
                 apiKey = cfg.apiKey,
                 baseUrl = cfg.baseUrl,
                 genModel = cfg.genModel,
+                visionModel = cfg.visionModel,
                 isConfigured = cfg.isConfigured,
             )
         }
@@ -36,6 +37,7 @@ class AiConfigViewModel @Inject constructor(
     fun onApiKeyChange(v: String) { _uiState.value = _uiState.value.copy(apiKey = v, testResult = null) }
     fun onBaseUrlChange(v: String) { _uiState.value = _uiState.value.copy(baseUrl = v, testResult = null) }
     fun onModelChange(v: String) { _uiState.value = _uiState.value.copy(genModel = v, testResult = null) }
+    fun onVisionModelChange(v: String) { _uiState.value = _uiState.value.copy(visionModel = v, testResult = null) }
 
     fun testAndSave() {
         val s = _uiState.value
@@ -48,7 +50,7 @@ class AiConfigViewModel @Inject constructor(
             val result = genClient.testConnection(s.baseUrl, s.apiKey)
             result.fold(
                 onSuccess = { msg ->
-                    configStore.save(s.apiKey, s.baseUrl, s.genModel)
+                    configStore.save(s.apiKey, s.baseUrl, s.genModel, s.visionModel)
                     _uiState.value = _uiState.value.copy(
                         testing = false,
                         testResult = "✅ $msg，已保存",

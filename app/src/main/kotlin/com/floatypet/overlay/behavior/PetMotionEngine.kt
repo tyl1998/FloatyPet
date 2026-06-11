@@ -146,15 +146,18 @@ class PetMotionEngine {
         if (stateTimer >= stateDuration) {
             val r = Random.nextFloat()
             when {
-                r < 0.50f -> {
+                // 20% walk — pet should mostly stay put, occasionally wander
+                r < 0.20f -> {
                     facingRight = Random.nextBoolean()
                     transitionTo(MoveState.WALK, 80 + rand(160))
                 }
-                r < 0.80f -> {
+                // 40% idle action (sit/stretch/happy) — expressive but stays in place
+                r < 0.60f -> {
                     idleAction = randomIdleAction()
                     transitionTo(MoveState.IDLE_ACTION, actionDuration(idleAction))
                 }
-                else -> transitionTo(MoveState.IDLE_STAND, 30 + rand(60))
+                // 40% just keep standing — gentle idle breathing
+                else -> transitionTo(MoveState.IDLE_STAND, 120 + rand(180))
             }
         }
     }
@@ -201,7 +204,7 @@ class PetMotionEngine {
         y = groundY
         state = MoveState.IDLE_STAND
         stateTimer = 0
-        stateDuration = 30
+        stateDuration = 180 + rand(120)   // 3-5 s initial pause before any transition
         vy = 0f
         facingRight = true
     }

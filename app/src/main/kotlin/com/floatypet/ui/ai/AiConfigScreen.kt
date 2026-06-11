@@ -33,6 +33,7 @@ fun AiConfigRoute(
         onApiKeyChange = viewModel::onApiKeyChange,
         onBaseUrlChange = viewModel::onBaseUrlChange,
         onModelChange = viewModel::onModelChange,
+        onVisionModelChange = viewModel::onVisionModelChange,
         onTestAndSave = viewModel::testAndSave,
     )
 }
@@ -43,6 +44,7 @@ internal fun AiConfigScreen(
     onApiKeyChange: (String) -> Unit,
     onBaseUrlChange: (String) -> Unit,
     onModelChange: (String) -> Unit,
+    onVisionModelChange: (String) -> Unit,
     onTestAndSave: () -> Unit,
 ) {
     Column(
@@ -79,6 +81,15 @@ internal fun AiConfigScreen(
             onValueChange = onModelChange,
             label = { Text("图像生成模型") },
             placeholder = { Text("doubao-seedream-4-0-250828") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        OutlinedTextField(
+            value = state.visionModel,
+            onValueChange = onVisionModelChange,
+            label = { Text("视觉分析模型（可选）") },
+            placeholder = { Text("doubao-1.5-vision-pro-32k") },
+            supportingText = { Text("填写后，生成前自动分析你的宠物照片，保证各动作风格一致") },
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
         )

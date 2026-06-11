@@ -49,6 +49,15 @@ class FrameSequencer {
 
     fun hasFrames(action: PetAction): Boolean = tracks[action]?.frames?.isNotEmpty() == true
 
+    /** 始终返回 IDLE 轨道当前帧（用于无当前动作帧时降级）。 */
+    fun idleFrame(frameTimeNanos: Long): Bitmap? {
+        val saved = current
+        current = PetAction.IDLE
+        val frame = currentFrame(frameTimeNanos)
+        current = saved
+        return frame
+    }
+
     /** 切换当前动作并重置帧游标。 */
     fun play(action: PetAction) {
         current = action

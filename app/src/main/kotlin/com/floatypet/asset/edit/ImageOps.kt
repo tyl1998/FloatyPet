@@ -39,23 +39,88 @@ object ImageOps {
      *
      * @param tolerance 0..255，越大去除越激进
      */
+    /**
+     * 纯色背景抠图。
+     *
+     * 策略：先用四角像素估算背景色，四角互相接近（maxChannelDist ≤ 40）才视为纯色背景。
+     * 然后沿整圈边缘寻找与背景色接近的种子点，统一以背景色为参考发起泛洪。
+     *
+     * 关键：**种子点用背景色作参考**，而非各自颜色——防止主体边缘的浅色毛发
+     * 被当作背景出发，导致主体内部也被清除。
+     *
+     * 四角不一致（背景复杂）时直接返回原图，不做处理。
+     */
     fun removeFlatBackground(src: Bitmap, tolerance: Int = 32): Bitmap {
+        val w = src.width
+        val h = src.height
+        val out = src.copy(Bitmap.Config.ARGB_8888, true)
+
+        val tl = out[0, 0]
+        val tr = out[w - 1, 0]
+        val bl = out[0, h - 1]
+        val br = out[w - 1, h - 1]
+
+        // Estimate background color as average of four corners — only if they agree.
+        if (!cornersUniform(tl, tr, bl, br, maxDist = 40)) return out
+
+        val bgR = (Color.red(tl) + Color.red(tr) + Color.red(bl) + Color.red(br)) / 4
+        val bgG = (Color.green(tl) + Color.green(tr) + Color.green(bl) + Color.green(br)) / 4
+        val bgB = (Color.blue(tl) + Color.blue(tr) + Color.blue(bl) + Color.blue(br)) / 4
+        val bgColor = Color.argb(255, bgR, bgG, bgB)
+
+        val visited = BooleanArray(w * h)
+        val stack = ArrayDeque<Int>()
+
+        // Seed from every edge pixel that is close to the background color.
+        // Using bgColor (not each pixel's own color) as the reference prevents
+        // the subject's fur/edge pixels from spawning their own fill regions.
+        val edgeIndices = buildList {
+            for (x in 0 until w) { add(x); add((h - 1) * w + x) }
+            for (y in 1 until h - 1) { add(y * w); add(y * w + w - 1) }
+        }
+        for (idx in edgeIndices) {
+            if (visited[idx]) continue
+            val px = out[idx % w, idx / w]
+            if (Color.alpha(px) == 0) { visited[idx] = true; continue }
+            if (colorClose(px, bgColor, tolerance)) {
+                floodFill(out, w, h, idx, bgColor, tolerance, visited, stack)
+            }
+        }
+        return out
+    }
+
+    /**
+     * 纯色背景抠图（指定背景色版）。跳过四角一致性检测，直接以 [bgColor] 为泛洪参考色。
+     * 适合已由 AI 检测出背景色的场景（GIF/视频导入）。
+     */
+    fun removeFlatBackground(src: Bitmap, tolerance: Int = 32, bgColor: Int): Bitmap {
         val w = src.width
         val h = src.height
         val out = src.copy(Bitmap.Config.ARGB_8888, true)
         val visited = BooleanArray(w * h)
         val stack = ArrayDeque<Int>()
-
-        val corners = intArrayOf(
-            0, w - 1, (h - 1) * w, h * w - 1,
-        )
-        for (c in corners) {
-            if (!visited[c]) {
-                val refColor = out[c % w, c / w]
-                floodFill(out, w, h, c, refColor, tolerance, visited, stack)
+        val edgeIndices = buildList {
+            for (x in 0 until w) { add(x); add((h - 1) * w + x) }
+            for (y in 1 until h - 1) { add(y * w); add(y * w + w - 1) }
+        }
+        for (idx in edgeIndices) {
+            if (visited[idx]) continue
+            val px = out[idx % w, idx / w]
+            if (Color.alpha(px) == 0) { visited[idx] = true; continue }
+            if (colorClose(px, bgColor, tolerance)) {
+                floodFill(out, w, h, idx, bgColor, tolerance, visited, stack)
             }
         }
         return out
+    }
+
+    private fun cornersUniform(tl: Int, tr: Int, bl: Int, br: Int, maxDist: Int): Boolean {
+        fun dist(a: Int, b: Int) = maxOf(
+            abs(Color.red(a) - Color.red(b)),
+            abs(Color.green(a) - Color.green(b)),
+            abs(Color.blue(a) - Color.blue(b)),
+        )
+        return dist(tl, tr) <= maxDist && dist(tl, bl) <= maxDist && dist(tl, br) <= maxDist
     }
 
     private fun floodFill(

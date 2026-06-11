@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -24,6 +25,7 @@ import com.floatypet.ui.home.HomeRoute
 import com.floatypet.ui.home.HomeViewModel
 import com.floatypet.ui.theme.FloatyPetTheme
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -48,6 +50,12 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        // 切换/删除宠物后重载悬浮窗
+        lifecycleScope.launch {
+            homeViewModel.petSwitched.collect { reloadOverlayIfRunning() }
+        }
+
         setContent {
             FloatyPetTheme {
                 val navController = rememberNavController()
@@ -67,6 +75,7 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onToggleOverlay = ::toggleOverlay,
                                 onGoAiConfig = { navController.navigate("ai_config") },
+                                onManagePet = { navController.navigate("edit_manage") },
                                 modifier = Modifier.padding(padding),
                             )
                         }
@@ -74,6 +83,17 @@ class MainActivity : ComponentActivity() {
                             val uriStr = backStack.arguments?.getString("uri").orEmpty()
                             EditRoute(
                                 imageUri = Uri.parse(Uri.decode(uriStr)),
+                                onSaved = {
+                                    reloadOverlayIfRunning()
+                                    navController.popBackStack("home", inclusive = false)
+                                },
+                                onBack = { navController.popBackStack() },
+                                onGoAiConfig = { navController.navigate("ai_config") },
+                            )
+                        }
+                        composable("edit_manage") {
+                            EditRoute(
+                                imageUri = null,
                                 onSaved = {
                                     reloadOverlayIfRunning()
                                     navController.popBackStack("home", inclusive = false)

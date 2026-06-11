@@ -15,5 +15,15 @@ sealed interface HomeUiState {
         val statusText: String,
         val thumbnail: Bitmap?,
         val overlayRunning: Boolean,
+        /** 所有宠物的摘要列表，供切换面板使用。 */
+        val allPets: List<PetSummary> = emptyList(),
+        val currentPetId: String = "",
     ) : HomeUiState
 }
+
+data class PetSummary(
+    val id: String,
+    val name: String,
+    val thumbnail: Bitmap?,
+)
+

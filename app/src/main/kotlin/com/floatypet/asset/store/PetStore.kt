@@ -61,6 +61,7 @@ class PetStore @Inject constructor(
             put("assetType", pet.assetType.name)
             put("createdAtMillis", pet.createdAtMillis)
             put("availableActions", JSONArray(pet.availableActions.map { it.name }))
+            put("description", pet.description)
         }
         File(petDir(pet.id), "pet.json").writeText(json.toString())
     }
@@ -80,6 +81,7 @@ class PetStore @Inject constructor(
                     .getOrDefault(PetAssetType.SPRITE_2D),
                 availableActions = actions,
                 createdAtMillis = o.optLong("createdAtMillis", 0L),
+                description = o.optString("description", ""),
             )
         }.getOrNull()
     }
@@ -87,4 +89,11 @@ class PetStore @Inject constructor(
     fun deletePet(petId: String) {
         petDir(petId).deleteRecursively()
     }
+
+    /** Returns IDs of all pet directories that have a valid pet.json (filesystem discovery). */
+    fun listPetIds(): List<String> =
+        root.listFiles()
+            ?.filter { it.isDirectory && File(it, "pet.json").exists() }
+            ?.mapNotNull { dir -> readPet(dir.name)?.id }
+            ?: emptyList()
 }

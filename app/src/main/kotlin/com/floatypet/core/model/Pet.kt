@@ -11,4 +11,6 @@ data class Pet(
     /** 已具备帧素材的动作集合。MVP 首切片通常只有 IDLE。 */
     val availableActions: Set<PetAction> = setOf(PetAction.IDLE),
     val createdAtMillis: Long = 0L,
+    /** 用于 AI 生成的宠物描述词，持久化以便下次续生成直接使用。 */
+    val description: String = "",
 )

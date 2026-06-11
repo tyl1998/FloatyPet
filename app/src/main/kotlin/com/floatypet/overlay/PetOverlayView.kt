@@ -3,6 +3,8 @@ package com.floatypet.overlay
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.PorterDuff
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
@@ -34,6 +36,14 @@ class PetOverlayView(
     private var dragStarted = false
     private val touchSlop = 14f * resources.displayMetrics.density
 
+    init {
+        // Software layer is required so PorterDuff.Mode.CLEAR in onDraw writes true transparent
+        // pixels. Hardware display lists record "add" commands only — CLEAR has no meaning there
+        // and the canvas stays opaque black. Software canvas operates on a real Bitmap so CLEAR
+        // correctly zeroes all ARGB channels. The view is 280×280 px, perf impact is negligible.
+        setLayerType(LAYER_TYPE_SOFTWARE, null)
+    }
+
     private val gestureDetector = GestureDetector(context,
         object : GestureDetector.SimpleOnGestureListener() {
             override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
@@ -53,6 +63,7 @@ class PetOverlayView(
     }
 
     override fun onDraw(canvas: Canvas) {
+        canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR)
         renderer.drawTo(canvas)
     }
 

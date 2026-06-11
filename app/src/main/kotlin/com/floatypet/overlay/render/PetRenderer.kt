@@ -51,6 +51,9 @@ interface PetRenderer {
     /** 整体变换（单帧回退 / 呼吸效果用）。 */
     fun applyTransform(scale: Float, dx: Float, dy: Float, rotation: Float)
 
+    /** 同步行走距离（px），使步频与移动速度精确对齐。在 [render] 前调用。 */
+    fun setWalkPhase(distancePx: Float) {}
+
     /** 水平镜像——向左走时传 true，右走传 false。 */
     fun setMirrorX(mirror: Boolean)
 

@@ -59,11 +59,16 @@ class OverlayService : Service() {
     private val choreographer = Choreographer.getInstance()
     private var looping = false
 
+    private var petLoaded = false
+    private var lastAction = com.floatypet.core.model.PetAction.IDLE
+    private var walkDistancePx = 0f
+    private var lastWalkX = Float.NaN
+
     private val screenReceiver = object : BroadcastReceiver() {
         override fun onReceive(ctx: Context?, intent: Intent?) {
             when (intent?.action) {
                 Intent.ACTION_SCREEN_OFF -> stopLoop()
-                Intent.ACTION_SCREEN_ON -> startLoop()
+                Intent.ACTION_SCREEN_ON -> if (petLoaded) startLoop()
             }
         }
     }
@@ -80,8 +85,20 @@ class OverlayService : Service() {
                 overlayView?.let { runCatching { windowManager.updateViewLayout(it, layoutParams) } }
             }
 
-            // 3. 通知渲染器动作 + 朝向
-            renderer.playAction(frame.action)
+            // 3. 通知渲染器动作 + 朝向（action 变化时才重置帧序列）
+            if (frame.action != lastAction) {
+                renderer.playAction(frame.action)
+                lastAction = frame.action
+            }
+            // 步频与实际位移同步：位移越快，步子越快
+            if (frame.action == com.floatypet.core.model.PetAction.WALK) {
+                if (!lastWalkX.isNaN()) walkDistancePx += kotlin.math.abs(frame.x - lastWalkX)
+                lastWalkX = frame.x
+            } else {
+                lastWalkX = Float.NaN
+                walkDistancePx = 0f
+            }
+            renderer.setWalkPhase(walkDistancePx)
             renderer.setMirrorX(!frame.facingRight)
             renderer.render(frameTimeNanos)
             overlayView?.invalidate()
@@ -105,7 +122,7 @@ class OverlayService : Service() {
             @Suppress("UnspecifiedRegisterReceiverFlag")
             registerReceiver(screenReceiver, f)
         }
-        startLoop()
+        // startLoop() 由 addOverlay() 内的协程在 loadPet 完成后调用
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int = START_NOT_STICKY
@@ -146,15 +163,6 @@ class OverlayService : Service() {
             y = motionEngine.y.toInt()
         }
 
-        serviceScope.launch {
-            val pet = petRepository.currentPet.first()
-            val path = pet?.let { petRepository.assetPath(it.id) } ?: ""
-            withContext(Dispatchers.IO) {
-                renderer.loadPet(assetPath = path, type = PetAssetType.SPRITE_2D)
-            }
-            overlayView?.invalidate()
-        }
-
         val view = PetOverlayView(
             context = this,
             renderer = renderer,
@@ -181,6 +189,17 @@ class OverlayService : Service() {
         overlayView = view
         renderer.setViewport(sizePx, sizePx)
         windowManager.addView(view, layoutParams)
+
+        // 先加载素材，完成后再启动渲染循环（避免渲染先于帧加载，显示占位猫）
+        serviceScope.launch {
+            val pet = petRepository.currentPet.first()
+            val path = pet?.let { petRepository.assetPath(it.id) } ?: ""
+            withContext(Dispatchers.IO) {
+                renderer.loadPet(assetPath = path, type = PetAssetType.SPRITE_2D)
+            }
+            petLoaded = true
+            startLoop()
+        }
     }
 
     private fun startLoop() {
